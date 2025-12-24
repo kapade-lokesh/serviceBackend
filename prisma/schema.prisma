@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum Role {
+  ADMIN
+  CUSTOMER
+  PROVIDER
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+model User {
+   id String @id @default(uuid())
+   firstname String
+   lastname String
+   mobile String @unique
+   address String 
+   role Role  
+   password String
+   provider Provider?
+   bookings Booking[]
+   createdAt DateTime  @default(now())
+   updatedAt DateTime  @updatedAt
+}
+
+model Provider {
+   id String @id @default(uuid())
+   location String
+   availability Boolean
+   services Service[]
+   bookings Booking[]
+   verified Boolean
+   userID String @unique 
+   user User @relation(fields: [userID],references: [id])
+   createdAt DateTime  @default(now())
+   updatedAt DateTime  @updatedAt
+   
+}
+
+model Service{
+   id String @id @default(uuid())
+   name String
+   basePrice Int
+   active Boolean
+   providers Provider[]
+   bookings Booking[]
+}
+
+model Booking {
+   id String @id @default(uuid())
+   userId String 
+   providerId String 
+   serviceId String
+   status BookingStatus
+   user User @relation(fields: [userId],references: [id])
+   provider Provider @relation(fields: [providerId],references: [id])
+   service Service @relation(fields: [serviceId],references: [id])
+   createdAt DateTime  @default(now())
+   updatedAt DateTime  @updatedAt
+}
+
