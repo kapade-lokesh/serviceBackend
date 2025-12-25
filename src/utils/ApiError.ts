@@ -17,6 +17,12 @@ class UseralreadyExist extends ApiError {
   }
 }
 
+class AuthenticationError extends ApiError {
+  constructor(message: string) {
+    super(message, 401);
+  }
+}
+
 class InvalidInput extends ApiError {
   public details: any;
   constructor(error: ZodError) {
@@ -48,13 +54,14 @@ export {
   InvalidInput,
   NotFoundError,
   InternalServerError,
+  AuthenticationError,
 };
 
-export function formatZodError(error: ZodError) {
-  return error.issues.reduce((acc, issue) => {
-    const field = issue.path.join(".");
-    if (!acc[field]) acc[field] = [];
-    acc[field].push(issue.message);
-    return acc;
-  }, {} as Record<string, string[]>);
-}
+// export function formatZodError(error: ZodError) {
+//   return error.issues.reduce((acc, issue) => {
+//     const field = issue.path.join(".");
+//     if (!acc[field]) acc[field] = [];
+//     acc[field].push(issue.message);
+//     return acc;
+//   }, {} as Record<string, string[]>);
+// }

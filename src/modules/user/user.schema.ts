@@ -4,6 +4,10 @@ import { Role } from "@prisma/client";
 export const userSchema = z.object({
   firstname: z.string().min(2, "please enter a valid name"),
   lastname: z.string().min(2, "please enter a valid name"),
+  email: z
+    .string({ error: "email required" })
+    .email("please enter valid email"),
+
   mobile: z.string().min(10, "please enter valid mobile number"),
   password: z
     .string({ error: "password required" })

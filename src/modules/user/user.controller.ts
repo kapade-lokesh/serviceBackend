@@ -9,7 +9,7 @@ import {
 } from "../../utils/ApiError";
 // create user
 
-export const registerUserController = async (req: Request, res: Response) => {
+const registerUserController = async (req: Request, res: Response) => {
   try {
     const validateData = userSchema.safeParse(req.body);
 
@@ -17,13 +17,13 @@ export const registerUserController = async (req: Request, res: Response) => {
       throw new InvalidInput(validateData.error);
     }
 
-    const user = await createUser(validateData.data);
+    const response = await createUser(validateData.data);
 
     return res
       .status(201)
-      .json(new ApiResponse(true, 201, "User Created", user));
+      .json(new ApiResponse(true, 201, "User Created", response, null));
   } catch (err: any) {
-    //console.log(err);
+    console.log(err);
     if (err instanceof ApiError) {
       return res
         .status(409)
@@ -33,3 +33,5 @@ export const registerUserController = async (req: Request, res: Response) => {
     throw new InternalServerError();
   }
 };
+
+export { registerUserController };

@@ -32,9 +32,11 @@ model User {
    firstname String
    lastname String
    mobile String @unique
+   email String @unique
    address String 
    role Role  
    password String
+   token String?
    provider Provider?
    bookings Booking[]
    createdAt DateTime  @default(now())
