@@ -13,6 +13,7 @@ export const userSchema = z.object({
     .string({ error: "password required" })
     .min(10, "please enter password")
     .nonempty("please Enter a password"),
+  token: z.string().optional(),
   address: z.string().min(1),
   role: z.nativeEnum(Role),
 });

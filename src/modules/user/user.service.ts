@@ -9,24 +9,14 @@ const findUserByEmail = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: { email: email },
   });
-
-  if (!user) {
-    throw new NotFoundError("User");
-  }
-
   return user;
 };
 
-//find user by email
+//find user by mobile
 const findUserByMobile = async (mobile: string) => {
   const user = await prisma.user.findUnique({
     where: { mobile: mobile },
   });
-
-  if (!user) {
-    throw new NotFoundError("User");
-  }
-
   return user;
 };
 
@@ -37,7 +27,6 @@ const createUser = async (data: Iuser) => {
   if (existingUser) {
     throw new UseralreadyExist();
   }
-
   return prisma.$transaction(async (tx) => {
     const hash: string = await hashedPassword(data.password);
     const { password, ...userData } = data;

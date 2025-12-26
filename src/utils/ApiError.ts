@@ -23,6 +23,8 @@ class AuthenticationError extends ApiError {
   }
 }
 
+
+
 class InvalidInput extends ApiError {
   public details: any;
   constructor(error: ZodError) {

@@ -4,6 +4,8 @@ import { AuthenticationError, NotFoundError } from "../../utils/ApiError";
 import { isCorrectPassword } from "../../utils/encryption";
 import { findUserByEmail, updateUser } from "../user/user.service";
 import { Iauth } from "./auth.schema";
+import { prisma } from "../../lib/prisma";
+import { verifyAccessToken } from "../../utils/jwt";
 
 const loginUser = async (credentials: Iauth) => {
   const { email, password } = credentials;
@@ -21,21 +23,60 @@ const loginUser = async (credentials: Iauth) => {
 
   const accesstoken = jwt.sign(
     { id: existingUser.id, email: existingUser.email, role: existingUser.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
+    process.env.JWT_SECRET!,
+    { expiresIn: Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) }
   );
   const refreshtoken = jwt.sign(
     { id: existingUser.id, email: existingUser.email, role: existingUser.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY }
+    process.env.JWT_SECRET!,
+    { expiresIn: Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS) }
   );
 
-  await updateUser({
-    id: existingUser.id,
-    data: { token: existingUser.token },
+  const absoluteExpiry = new Date(
+    Date.now() + Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS)
+  );
+
+  await prisma.token.create({
+    data: {
+      userId: existingUser.id,
+      token: refreshtoken,
+      expiresAt: absoluteExpiry,
+    },
   });
 
   return { accesstoken, refreshtoken };
 };
 
-export { loginUser };
+const generateAccessToken = async (refreshtoken: string) => {
+  if (!refreshtoken) {
+    throw new AuthenticationError("Token Not Found");
+  }
+
+  const decoded = verifyAccessToken(refreshtoken);
+
+  const storedToken = await prisma.token.findUnique({
+    where: { token: refreshtoken },
+  });
+
+  if (!storedToken) {
+    throw new AuthenticationError("Token Not Found");
+  }
+
+  if (storedToken.expiresAt < new Date()) {
+    throw new AuthenticationError("Session expired");
+  }
+
+  const newAccessToken = jwt.sign(
+    {
+      userID: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) }
+  );
+
+  return { newAccessToken };
+};
+
+export { loginUser, generateAccessToken };

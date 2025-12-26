@@ -6,11 +6,10 @@ import {
   InternalServerError,
   InvalidInput,
 } from "../../utils/ApiError";
-import { loginUser } from "./auth.service";
+import { generateAccessToken, loginUser } from "./auth.service";
 
-export const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response) => {
   try {
-    console.log("calling login...");
     const validateData = authSchema.safeParse(req.body);
 
     if (!validateData.success) {
@@ -22,13 +21,13 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("access_token", response.accesstoken, {
       secure: false,
       httpOnly: true,
-      maxAge: 15 * 60 * 1000, 
+      maxAge: 15 * 60 * 1000,
     });
 
-    res.cookie("refreh_token", response.refreshtoken, {
+    res.cookie("refresh_token", response.refreshtoken, {
       secure: false,
       httpOnly: true,
-      maxAge: 2 * 60 * 60 * 1000, 
+      maxAge: 2 * 60 * 60 * 1000,
     });
 
     res.status(200).json(new ApiResponse(true, 201, "Login Success", {}, null));
@@ -43,3 +42,34 @@ export const login = async (req: Request, res: Response) => {
     throw new InternalServerError();
   }
 };
+
+const getAccessToken = async (req: Request, res: Response) => {
+  try {
+    console.log("cookies", req.cookies);
+    const refreshToken = req.cookies?.refresh_token;
+
+    const response = await generateAccessToken(refreshToken);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          true,
+          200,
+          "Access token refreshed successfully",
+          response
+        )
+      );
+  } catch (err) {
+    console.log(err);
+    if (err instanceof ApiError) {
+      return res
+        .status(409)
+        .json(new ApiResponse(false, err.statusCode, err.message, null, err));
+    }
+
+    throw new InternalServerError();
+  }
+};
+
+export { login, getAccessToken };

@@ -4,9 +4,11 @@
     "target": "ES2022",
     "outDir": "./dist",
     "strict": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": ["src", "server.ts", "prisma.config.ts"]
 }
