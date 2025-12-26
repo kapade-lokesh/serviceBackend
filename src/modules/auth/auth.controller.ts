@@ -50,6 +50,18 @@ const getAccessToken = async (req: Request, res: Response) => {
 
     const response = await generateAccessToken(refreshToken);
 
+    res.cookie("access_token", response.newAccessToken, {
+      secure: false,
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refresh_token", response.newRefreshToken, {
+      secure: false,
+      httpOnly: true,
+      maxAge: 2 * 60 * 60 * 1000,
+    });
+
     return res
       .status(200)
       .json(

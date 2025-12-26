@@ -24,12 +24,20 @@ const loginUser = async (credentials: Iauth) => {
   const accesstoken = jwt.sign(
     { id: existingUser.id, email: existingUser.email, role: existingUser.role },
     process.env.JWT_SECRET!,
-    { expiresIn: Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) }
+    {
+      expiresIn: Math.floor(
+        Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) / 1000
+      ),
+    }
   );
   const refreshtoken = jwt.sign(
     { id: existingUser.id, email: existingUser.email, role: existingUser.role },
     process.env.JWT_SECRET!,
-    { expiresIn: Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS) }
+    {
+      expiresIn: Math.floor(
+        Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS) / 1000
+      ),
+    }
   );
 
   const absoluteExpiry = new Date(
@@ -66,6 +74,14 @@ const generateAccessToken = async (refreshtoken: string) => {
     throw new AuthenticationError("Session expired");
   }
 
+  const now = Date.now(); // current time in ms
+  const expiresAt = storedToken.expiresAt.getTime(); // Date → ms
+  const remainingTimeInSeconds = Math.floor((expiresAt - now) / 1000);
+
+  if (remainingTimeInSeconds <= 0) {
+    throw new AuthenticationError("Session expired");
+  }
+
   const newAccessToken = jwt.sign(
     {
       userID: decoded.id,
@@ -73,10 +89,29 @@ const generateAccessToken = async (refreshtoken: string) => {
       role: decoded.role,
     },
     process.env.JWT_SECRET!,
-    { expiresIn: Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) }
+    {
+      expiresIn: Math.floor(
+        Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) / 1000
+      ),
+    }
   );
 
-  return { newAccessToken };
+  const newRefreshToken = jwt.sign(
+    {
+      userID: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: remainingTimeInSeconds }
+  );
+
+  await prisma.token.update({
+    where: { id: storedToken.id },
+    data: { token: newRefreshToken },
+  });
+
+  return { newAccessToken, newRefreshToken };
 };
 
 export { loginUser, generateAccessToken };

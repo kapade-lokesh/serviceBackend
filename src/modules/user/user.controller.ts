@@ -34,4 +34,7 @@ const registerUserController = async (req: Request, res: Response) => {
   }
 };
 
-export { registerUserController };
+const getProfile = async (req: Request, res: Response) => {
+  res.send("Profile Accesed");
+};
+export { registerUserController, getProfile };

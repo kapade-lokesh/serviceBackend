@@ -4,8 +4,8 @@ import { verifyAccessToken } from "../utils/jwt";
 
 const isAuthenticate = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-
+    const token = req.cookies?.access_token;
+    console.log("req.cookies", req.cookies);
     if (!token) {
       throw new AuthenticationError("Token Not Found");
     }
