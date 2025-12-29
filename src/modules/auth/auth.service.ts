@@ -16,6 +16,12 @@ const loginUser = async (credentials: Iauth) => {
     throw new NotFoundError("User");
   }
 
+  if (!existingUser.password) {
+    throw new AuthenticationError(
+      "This Account Uses Google Sign-In Please Login With Google "
+    );
+  }
+
   const iscorrect = isCorrectPassword(
     password,
     existingUser.password as string

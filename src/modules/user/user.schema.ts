@@ -11,13 +11,13 @@ export const userSchema = z.object({
   mobile: z.string().min(10, "please enter valid mobile number"),
   password: z
     .string({ error: "password required" })
-    .min(10, "please enter password")
+    .min(6, "please minimum 6 char password")
     .nullable()
     .optional(),
   token: z.string().optional(),
   address: z.string().min(1),
-  authProvider:z.nativeEnum(Auth),
-  authProviderId:z.string(),
+  authProvider: z.nativeEnum(Auth),
+  authProviderId: z.string(),
   role: z.nativeEnum(Role),
 });
 

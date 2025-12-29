@@ -40,7 +40,7 @@ const login = async (req: Request, res: Response) => {
     console.log(err);
     if (err instanceof ApiError) {
       return res
-        .status(409)
+        .status(err.statusCode)
         .json(new ApiResponse(false, err.statusCode, err.message, null, err));
     }
 

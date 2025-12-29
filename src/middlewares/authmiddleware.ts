@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthenticationError } from "../utils/ApiError";
+import { AuthenticationError, AuthonrizationError } from "../utils/ApiError";
 import { verifyAccessToken } from "../utils/jwt";
 
 const isAuthenticate = (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies?.access_token;
-    console.log("req.cookies", req.cookies);
+
     if (!token) {
       throw new AuthenticationError("Token Not Found");
     }
@@ -24,4 +24,25 @@ const isAuthenticate = (req: Request, res: Response, next: NextFunction) => {
     next(err);
   }
 };
-export { isAuthenticate };
+
+const authorizedRoles =
+  (roles: string[]) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let user = req.user;
+
+      if (!user) {
+        throw new AuthonrizationError("Unauthorized");
+      }
+
+      if (!roles.includes(user.role)) {
+        throw new AuthonrizationError(
+          "User not allowed to perform this action"
+        );
+      }
+
+      next();
+    } catch (err: any) {
+      next(err);
+    }
+  };
+export { isAuthenticate, authorizedRoles };

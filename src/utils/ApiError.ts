@@ -23,7 +23,11 @@ class AuthenticationError extends ApiError {
   }
 }
 
-
+class AuthonrizationError extends ApiError {
+  constructor(message: string) {
+    super(message, 401);
+  }
+}
 
 class InvalidInput extends ApiError {
   public details: any;
@@ -57,13 +61,5 @@ export {
   NotFoundError,
   InternalServerError,
   AuthenticationError,
+  AuthonrizationError,
 };
-
-// export function formatZodError(error: ZodError) {
-//   return error.issues.reduce((acc, issue) => {
-//     const field = issue.path.join(".");
-//     if (!acc[field]) acc[field] = [];
-//     acc[field].push(issue.message);
-//     return acc;
-//   }, {} as Record<string, string[]>);
-// }
