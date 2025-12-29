@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@prisma/client";
+import { Auth, Role } from "../../generated/prisma/enums";
 
 export const userSchema = z.object({
   firstname: z.string().min(2, "please enter a valid name"),
@@ -12,9 +12,12 @@ export const userSchema = z.object({
   password: z
     .string({ error: "password required" })
     .min(10, "please enter password")
-    .nonempty("please Enter a password"),
+    .nullable()
+    .optional(),
   token: z.string().optional(),
   address: z.string().min(1),
+  authProvider:z.nativeEnum(Auth),
+  authProviderId:z.string(),
   role: z.nativeEnum(Role),
 });
 

@@ -2,10 +2,11 @@
 import jwt from "jsonwebtoken";
 import { AuthenticationError, NotFoundError } from "../../utils/ApiError";
 import { isCorrectPassword } from "../../utils/encryption";
-import { findUserByEmail, updateUser } from "../user/user.service";
+import { createUser, findUserByEmail, updateUser } from "../user/user.service";
 import { Iauth } from "./auth.schema";
 import { prisma } from "../../lib/prisma";
 import { verifyAccessToken } from "../../utils/jwt";
+import { Auth, Role } from "../../generated/prisma/enums";
 
 const loginUser = async (credentials: Iauth) => {
   const { email, password } = credentials;
@@ -15,7 +16,10 @@ const loginUser = async (credentials: Iauth) => {
     throw new NotFoundError("User");
   }
 
-  const iscorrect = isCorrectPassword(password, existingUser.password);
+  const iscorrect = isCorrectPassword(
+    password,
+    existingUser.password as string
+  );
 
   if (!iscorrect) {
     throw new AuthenticationError("Invalid Password");
@@ -114,4 +118,82 @@ const generateAccessToken = async (refreshtoken: string) => {
   return { newAccessToken, newRefreshToken };
 };
 
-export { loginUser, generateAccessToken };
+const handleGoogleLogin = async (googleUser: {
+  email: string;
+  googleId: string;
+  firstName?: string;
+  lastName?: string;
+  picture?: string;
+  password?: string;
+}) => {
+  let user = await findUserByEmail(googleUser.email);
+
+  if (user) {
+    if (user.authProvider === Auth.GOOGLE) {
+      // nothing to update
+    }
+
+    if (user.authProvider === Auth.LOCAL) {
+      user = await updateUser({
+        id: user.id,
+        data: {
+          authProvider: Auth.GOOGLE,
+          authProviderId: googleUser.googleId,
+        },
+      });
+    }
+  }
+
+  if (!user) {
+    user = await createUser({
+      email: googleUser.email,
+      firstname: googleUser.firstName || "",
+      lastname: googleUser.lastName || "",
+      mobile: "",
+      address: "",
+      role: Role.CUSTOMER,
+      password: googleUser.password || null, // IMPORTANT
+      authProvider: Auth.GOOGLE, // IMPORTANT
+      authProviderId: googleUser.googleId,
+    });
+  }
+
+  if (!user) {
+    throw new Error("Failed To Create Or Retrieve User");
+  }
+
+  const accesstoken = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: Math.floor(
+        Number(process.env.JWT_ACCESS_TOKEN_EXPIRY_MS) / 1000
+      ),
+    }
+  );
+  const refreshtoken = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: Math.floor(
+        Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS) / 1000
+      ),
+    }
+  );
+
+  const absoluteExpiry = new Date(
+    Date.now() + Number(process.env.JWT_REFRESH_TOKEN_EXPIRY_MS)
+  );
+
+  await prisma.token.create({
+    data: {
+      userId: user.id,
+      token: refreshtoken,
+      expiresAt: absoluteExpiry,
+    },
+  });
+
+  return { accesstoken, refreshtoken };
+};
+
+export { loginUser, generateAccessToken, handleGoogleLogin };

@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
-import { Role } from "@prisma/client";
+import { Role } from "../../generated/prisma/enums";
 import { Iuser } from "./user.schema";
-import { NotFoundError, UseralreadyExist } from "../../utils/ApiError";
+import { UseralreadyExist } from "../../utils/ApiError";
 import { hashedPassword } from "../../utils/encryption";
 
 //find user by email
@@ -28,7 +28,13 @@ const createUser = async (data: Iuser) => {
     throw new UseralreadyExist();
   }
   return prisma.$transaction(async (tx) => {
-    const hash: string = await hashedPassword(data.password);
+    let hash: string | null = null;
+
+    // ONLY hash if password exists (LOCAL auth)
+    if (data.password) {
+      hash = await hashedPassword(data.password);
+    }
+
     const { password, ...userData } = data;
 
     const user = await tx.user.create({
@@ -45,9 +51,9 @@ const createUser = async (data: Iuser) => {
         },
       });
     }
+    user.password = null;
 
-    const { password: _, ...safeUser } = user;
-    return safeUser;
+    return user;
   });
 };
 

@@ -6,7 +6,12 @@ import {
   InternalServerError,
   InvalidInput,
 } from "../../utils/ApiError";
-import { generateAccessToken, loginUser } from "./auth.service";
+import {
+  generateAccessToken,
+  handleGoogleLogin,
+  loginUser,
+} from "./auth.service";
+import { verifyGoogleIdToken } from "../../validators/verifyGoogleId";
 
 const login = async (req: Request, res: Response) => {
   try {
@@ -69,7 +74,8 @@ const getAccessToken = async (req: Request, res: Response) => {
           true,
           200,
           "Access token refreshed successfully",
-          response
+          response,
+          null
         )
       );
   } catch (err) {
@@ -84,4 +90,37 @@ const getAccessToken = async (req: Request, res: Response) => {
   }
 };
 
-export { login, getAccessToken };
+const google = async (req: Request, res: Response) => {
+  try {
+    const token = req.body.idToken;
+    console.log(token);
+    const googleUser = await verifyGoogleIdToken(token);
+
+    const response = await handleGoogleLogin(googleUser);
+
+    res.cookie("access_token", response.accesstoken, {
+      secure: false,
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refresh_token", response.refreshtoken, {
+      secure: false,
+      httpOnly: true,
+      maxAge: 2 * 60 * 60 * 1000,
+    });
+    res
+      .status(200)
+      .json(new ApiResponse(true, 200, "Token Found", response, null));
+  } catch (err) {
+    console.log(err);
+    if (err instanceof ApiError) {
+      return res
+        .status(409)
+        .json(new ApiResponse(false, err.statusCode, err.message, null, err));
+    }
+
+    throw new InternalServerError();
+  }
+};
+export { login, getAccessToken, google };
