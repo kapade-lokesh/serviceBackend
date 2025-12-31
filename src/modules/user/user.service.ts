@@ -1,10 +1,10 @@
 import { prisma } from "../../lib/prisma";
 import { Role } from "../../generated/prisma/enums";
 import { Iuser } from "./user.schema";
-import { UseralreadyExist } from "../../utils/ApiError";
+import { UseralreadyExist, UserNotUpdatedError } from "../../utils/ApiError";
 import { hashedPassword } from "../../utils/encryption";
 
-//find user by email
+//Find User By Email
 const findUserByEmail = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: { email: email },
@@ -12,7 +12,7 @@ const findUserByEmail = async (email: string) => {
   return user;
 };
 
-//find user by mobile
+//Find User By Mobile
 const findUserByMobile = async (mobile: string) => {
   const user = await prisma.user.findUnique({
     where: { mobile: mobile },
@@ -20,7 +20,15 @@ const findUserByMobile = async (mobile: string) => {
   return user;
 };
 
-//create user service
+//Find User By Id
+const findUserByID = async (id: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: id },
+  });
+  return user;
+};
+
+//Create User Service
 const createUser = async (data: Iuser) => {
   const existingUser = await findUserByEmail(data.email);
 
@@ -51,20 +59,40 @@ const createUser = async (data: Iuser) => {
         },
       });
     }
-    user.password = null;
 
     return user;
   });
 };
 
-//update user
-
+//Update User Service
 const updateUser = async (user: { id: string; data: {} }) => {
-  const updateduser = prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { ...user.data },
   });
-  return updateduser;
+  if (!updateUser) {
+    throw new UserNotUpdatedError();
+  }
+
+  return updatedUser;
 };
 
-export { createUser, findUserByMobile, findUserByEmail, updateUser };
+//User Profile Service
+const getProfile = async (user: { id: string }) => {
+  const userId = user.id;
+
+  const userProfile = await findUserByID(userId);
+
+  if (!userProfile) {
+    throw new Error("Unable To Get User Profile");
+  }
+
+  return userProfile;
+};
+export {
+  createUser,
+  findUserByMobile,
+  findUserByEmail,
+  updateUser,
+  getProfile,
+};

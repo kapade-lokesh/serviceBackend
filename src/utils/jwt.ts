@@ -9,7 +9,7 @@ export interface AccessTokenPayload {
 
 export const verifyAccessToken = (token: string): AccessTokenPayload => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-  
+
   if (!decoded) {
     throw new AuthenticationError("Invalid access token");
   }

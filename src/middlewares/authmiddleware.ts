@@ -36,7 +36,7 @@ const authorizedRoles =
 
       if (!roles.includes(user.role)) {
         throw new AuthonrizationError(
-          "User not allowed to perform this action"
+          "User Not Allowed To Perform This Action"
         );
       }
 

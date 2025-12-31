@@ -54,6 +54,11 @@ class InternalServerError extends ApiError {
   }
 }
 
+class UserNotUpdatedError extends ApiError {
+  constructor(message = "User update failed") {
+    super(message, 400);
+  }
+}
 export {
   ApiError,
   UseralreadyExist,
@@ -62,4 +67,5 @@ export {
   InternalServerError,
   AuthenticationError,
   AuthonrizationError,
+  UserNotUpdatedError,
 };

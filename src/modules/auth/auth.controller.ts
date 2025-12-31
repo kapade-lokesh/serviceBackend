@@ -93,7 +93,7 @@ const getAccessToken = async (req: Request, res: Response) => {
 const google = async (req: Request, res: Response) => {
   try {
     const token = req.body.idToken;
-    console.log(token);
+
     const googleUser = await verifyGoogleIdToken(token);
 
     const response = await handleGoogleLogin(googleUser);

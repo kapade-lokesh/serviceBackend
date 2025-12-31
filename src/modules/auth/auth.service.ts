@@ -94,7 +94,7 @@ const generateAccessToken = async (refreshtoken: string) => {
 
   const newAccessToken = jwt.sign(
     {
-      userID: decoded.id,
+      id: decoded.id,
       email: decoded.email,
       role: decoded.role,
     },
@@ -108,7 +108,7 @@ const generateAccessToken = async (refreshtoken: string) => {
 
   const newRefreshToken = jwt.sign(
     {
-      userID: decoded.id,
+      id: decoded.id,
       email: decoded.email,
       role: decoded.role,
     },

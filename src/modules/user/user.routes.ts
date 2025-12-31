@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getProfile, registerUserController } from "./user.controller";
+import {
+  ProfileUserController,
+  registerUserController,
+  updateUserProfileContoller,
+} from "./user.controller";
 import {
   authorizedRoles,
   isAuthenticate,
@@ -9,11 +13,12 @@ import { Role } from "../../generated/prisma/enums";
 const userRouter = Router();
 
 userRouter.post("/register", registerUserController);
+userRouter.post("/update", isAuthenticate, updateUserProfileContoller);
 userRouter.get(
   "/getProfile",
   isAuthenticate,
   authorizedRoles([Role.CUSTOMER, Role.PROVIDER]),
-  getProfile
+  ProfileUserController
 );
 
 export default userRouter;

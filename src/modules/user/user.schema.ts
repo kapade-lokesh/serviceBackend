@@ -21,4 +21,17 @@ export const userSchema = z.object({
   role: z.nativeEnum(Role),
 });
 
+export const profileSchema = z.object({
+  id: z.string({ error: "Please  Provide Valid User ID" }),
+});
+
+export const updateUSerSchema = z.object({
+  firstname: z.string().min(2, "please enter a valid name"),
+  lastname: z.string().min(2, "please enter a valid name"),
+  mobile: z.string().min(10, "please enter valid mobile number"),
+  address: z.string().min(1),
+});
+
+export type Iupdateuser = z.infer<typeof updateUSerSchema>;
+
 export type Iuser = z.infer<typeof userSchema>;
